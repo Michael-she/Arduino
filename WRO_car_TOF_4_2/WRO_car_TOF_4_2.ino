@@ -22,8 +22,8 @@ int16_t tfTemp = 0;  // temperature in 0.01 degree Celsius
 
 
 //Lord help my sanity (Or lack thereof)
-int movingCloser[5] = {-1, -1, -1, -1, -1};
-int movingFurther[5] = {-1, -1, -1, -1, -1};
+int movingCloser[5] = { -1, -1, -1, -1, -1 };
+int movingFurther[5] = { -1, -1, -1, -1, -1 };
 
 // other device variables
 uint16_t tfTime = 0;  // devie clock in milliseconds
@@ -110,7 +110,7 @@ int secondWallDist = -1;
 int thirdWallDist = -1;
 int fourthWallDist = -1;
 
-int deg90 = 92;
+int deg90 = 98;
 int turnOffset = 5;
 void setup() {
 
@@ -178,12 +178,27 @@ void setup() {
   Serial.println(F("VL53L0X API Simple Ranging example\n\n"));
   bootTFLuna(tfAddr);
   readAll();
+  for (int i = 0; i < 3; i++) {
+    Serial.println("Flash");
+    digitalWrite(redLED, HIGH);
+    delay(100);
+    digitalWrite(redLED, LOW);
 
+    digitalWrite(blueLED, HIGH);
+    delay(100);
+    digitalWrite(blueLED, LOW);
 
-  if(readAngle() != 0){
+    digitalWrite(greenLED, HIGH);
+    delay(100);
+    digitalWrite(greenLED, LOW);
+    delay(300);
+  }
 
-    while(true){
+  if (readAngle() != 0) {
+
+    while (readAngle() != 0) {
       Serial.println("Gyro not working...");
+      Serial.println(readAngle());
       digitalWrite(redLED, HIGH);
       digitalWrite(blueLED, LOW);
       delay(50);
@@ -191,52 +206,61 @@ void setup() {
       digitalWrite(redLED, LOW);
       delay(50);
     }
-  }else{
+  } else {
     Serial.println("Gyro Tested");
     delay(1000);
   }
-
-
 }
 
 
 void loop() {
-  
 
-
+  while (digitalRead(17) == LOW) {
+    digitalWrite(blueLED, HIGH);
+    digitalWrite(redLED, LOW);
+    digitalWrite(greenLED, LOW);
+    delay(10);
+    Serial.println("Waiting for buttn");
+    readAll();
+    displayAllDistances();
+  }
+  for (int i = 0; i < 10; i++) {
+    digitalWrite(greenLED, HIGH);
+    delay(50);
+    digitalWrite(greenLED, LOW);
+    delay(50);
+  }
   getLIDAR();
 
-  setMotor(6);
+  setMotor(10);
   wallNum = 1;
   firstmovement();
   setMotor(10);
+  // if(turningRight){
+    
+  // targetAngle += 8;
+  // }else{
+  //   targetAngle-=8;
+  // }
+  setAngle(targetAngle);
   wallNum = 2;
 
   waitForTurn();
 
   //delay(1000);
 
-  setMotor(4);
-  secondMovement();
-  setMotor(10);
 
-  waitForTurn();
 
-  setMotor(4);
-  thirdMovement();
-  setMotor(10);
+  for (int i = 0; i < 11; i++) {
+    setMotor(10);
+    fourthMovement();
+    setMotor(10);
 
-  waitForTurn();
-
-for(int i = 0; i<9; i++){
-  setMotor(4);
-  fourthMovement();
-  setMotor(10);
-
-  waitForTurn();
-}
-setMotor(0);
-
+    waitForTurn();
+  }
+  delay(1500);
+  setMotor(0);
+  delay(20000);
   //int request =
   /*
   setAngle(-90);
@@ -249,20 +273,23 @@ setMotor(0);
 
 
 void lookAtSide() {
- 
+  int ofsetCount = 0;
   bool edgeFound = false;
 
+  int lidarCount = 0;
+
   int forward, front, back;
-  int turnDelay = 0;
+  int turnDelay = 200;
   int targetAngleOfset = 0;
   int angleAjustment = 15;
 
   int counter = 0;
-
+  int mode = -1;
+  int modeOld = -1;
 
   if (turningRight) {
 
-
+    setAngle(targetAngle-5);
 
     bool waiting = true;
     int counter = 0;
@@ -278,11 +305,17 @@ void lookAtSide() {
       delay(5);
       if (counter == 3) {
 
-        setMotor(6);
+        setMotor(10);
         waiting = false;
       }
-    }
 
+      forward = getLIDAR();
+      if (forward < 70 && forward > 20) {
+        Serial.println("\n\n---------Turning on LIDAR----------");
+      waiting = false;
+      }
+    }
+setAngle(targetAngle);
     while (!edgeFound) {
 
 
@@ -297,7 +330,7 @@ void lookAtSide() {
         back = backRightVal;
 
       } else {
-       
+
         frontLeftVal = readFrontLeft();
         backLeftVal = readBackLeft();
         forward = getLIDAR();
@@ -306,58 +339,82 @@ void lookAtSide() {
       }
 
 
-      if (front != -1) {
-        setAngle(targetAngle + targetAngleOfset);
-      }
+     
       float distMultiplier = cos(targetAngleOfset * pi / 180);
- int estDist = distMultiplier * (front + back) / 2;
-      
+      int estDist = distMultiplier * (front + back) / 2;
+
       Serial.print("\t\t\t\t EstDist =");
       Serial.print(estDist);
-    
-      
+
+
       Serial.print(" / ");
-     
+
 
       Serial.println(frontRightVal);
 
 
-      if(forward<70){
+      if (forward < 70 && forward > 20) {
         Serial.println("\n\n---------Turning on LIDAR----------");
-        edgeFound = true;
+       lidarCount++;
+      }else{
+        lidarCount = 0;
       }
 
-    if (estDist > 300 || back ==-1) {
-      Serial.println("Going closer to the wall");
-      if (turningRight) {
-        targetAngleOfset = angleAjustment;
+      if(lidarCount == 1){
+         edgeFound = true;
+      }
+      if(back==-1 ||front==-1){
+        angleAjustment = 5;
+      }else{
+        angleAjustment = 15;
+      }
+
+      if (estDist > 300 || back == -1) {
+        ofsetCount++;
+        Serial.println("Going closer to the wall");
+        mode = 1;
+        if (turningRight) {
+          targetAngleOfset = angleAjustment;
+        } else {
+          targetAngleOfset = -angleAjustment;
+        }
+
+        delay(turnDelay);
+
+      } else if (estDist < 140 && back != -1) {
+        Serial.println("Moving further away from the wall");
+        mode = 2;
+        if (turningRight) {
+          targetAngleOfset = -angleAjustment;
+        } else {
+          targetAngleOfset = +angleAjustment;
+        }
+        ofsetCount++;
+        delay(turnDelay);
+
+      }
+
+      else if (estDist > 175 || estDist < 200) {
+        mode = 0;
+        Serial.println("Correct distance to the walll");
+        targetAngleOfset = 0;
+        delay(turnDelay);
+        ofsetCount = 0;
+
       } else {
-        targetAngleOfset = -angleAjustment;
+        Serial.println("Somthing about a wall");
+      }
+      if (ofsetCount > 5) {
+        // whereGo(targetAngleOfset, front, back);
       }
 
-      delay(turnDelay);
-
-    } else if (estDist < 100 && back != -1) {
-      Serial.println("Moving further away from the wall");
-      if (turningRight) {
-        targetAngleOfset = -angleAjustment;
-      } else {
-        targetAngleOfset = +angleAjustment;
+      if(mode != modeOld){
+        
+         if (front != -1) {
+           modeOld = mode;
+        setAngle(targetAngle + targetAngleOfset);
       }
-
-      delay(turnDelay);
-
-    }
-
-    else if (estDist > 150 || estDist < 200) {
-      Serial.println("Correct distance to the walll");
-      targetAngleOfset = 0;
-      delay(turnDelay);
-
-    } else {
-      Serial.println("Somthing about a wall");
-    }
-      
+      }
 
 
       if (front == -1) {
@@ -366,16 +423,15 @@ void lookAtSide() {
       } else {
         counter = 0;
       }
-      if (counter == 2 && forward <100) {
+      if (counter == 3 && forward < 100) {
         edgeFound = true;
       }
-
-
     }
   } else {
 
     bool waiting = true;
     int counter = 0;
+    setAngle(targetAngle+5);
     while (waiting) {
       int distance = readFrontLeft();
       Serial.println(distance);
@@ -388,14 +444,21 @@ void lookAtSide() {
       delay(5);
       if (counter == 3) {
 
-        setMotor(6);
+        setMotor(10);
         waiting = false;
       }
+forward = getLIDAR();
+      if (forward < 70 && forward > 20) {
+        Serial.println("\n\n---------Turning on LIDAR----------");
+      waiting = false;
+      }
+    
     }
+    setAngle(targetAngle);
     while (!edgeFound) {
 
       if (turningRight) {
-       
+
         frontRightVal = readFrontRight();
         backRightVal = readBackRight();
 
@@ -404,7 +467,7 @@ void lookAtSide() {
         back = backRightVal;
 
       } else {
-       
+
         frontLeftVal = readFrontLeft();
         backLeftVal = readBackLeft();
         forward = getLIDAR();
@@ -413,58 +476,83 @@ void lookAtSide() {
       }
 
 
-      if (front != -1) {
-        setAngle(targetAngle + targetAngleOfset);
-      }
+     
       float distMultiplier = cos(targetAngleOfset * pi / 180);
 
       int estDist = distMultiplier * (front + back) / 2;
-      
+
       int ultraSonicDist = tfDist;
       Serial.print("\t\t\t\t ESTDIST = ");
       Serial.print(estDist);
       Serial.print("\t");
       Serial.print(front);
       Serial.print(" / ");
-     Serial.print(back);
+      Serial.print(back);
 
 
-if(forward<70 && forward>2){
-        Serial.println("\n\n---------Turning on LIDAR---------");
-        edgeFound = true;
+      if (forward < 70 && forward > 20) {
+        Serial.println("\n\n---------Turning on LIDAR----------");
+       lidarCount++;
+      }else{
+        lidarCount = 0;
       }
 
-    if (estDist > 300 || back == -1) {
-      Serial.println("Going closer to the wall");
-      if (turningRight) {
-        targetAngleOfset = angleAjustment;
+      if(lidarCount == 1){
+         edgeFound = true;
+      }
+
+
+      if(back==-1 ||front==-1){
+        angleAjustment = 5;
+      }else{
+        angleAjustment = 15;
+      }
+      
+
+      if (estDist > 300 || back == -1) {
+        Serial.println("Going closer to the wall");
+        if (turningRight) {
+          targetAngleOfset = angleAjustment;
+        } else {
+          targetAngleOfset = -angleAjustment;
+        }
+        mode = 1;
+        ofsetCount++;
+        delay(turnDelay);
+
+      } else if (estDist < 140 && back != -1) {
+        Serial.println("Moving further away from the wall");
+        if (turningRight) {
+          targetAngleOfset = -angleAjustment;
+        } else {
+          targetAngleOfset = +angleAjustment;
+        }
+        ofsetCount++;
+        mode =2;
+        delay(turnDelay);
+
+      }
+
+      else if (estDist > 175 || estDist < 200) {
+        Serial.println("Correct distance to the walll");
+        targetAngleOfset = 0;
+        delay(turnDelay);
+        ofsetCount = 0;
+        mode = 0;
       } else {
-        targetAngleOfset = -angleAjustment;
+        Serial.println("Somthing about a wall");
+      }
+      if (ofsetCount > 5) {
+        //whereGo(targetAngleOfset, front, back);
       }
 
-      delay(turnDelay);
-
-    } else if (estDist < 100 && back != -1) {
-      Serial.println("Moving further away from the wall");
-      if (turningRight) {
-        targetAngleOfset = -angleAjustment;
-      } else {
-        targetAngleOfset = +angleAjustment;
+      if(mode != modeOld){
+ if (front != -1) {
+   modeOld = mode;
+        setAngle(targetAngle + targetAngleOfset);
       }
 
-      delay(turnDelay);
-
-    }
-
-    else if (estDist > 150 || estDist < 200) {
-      Serial.println("Correct distance to the walll");
-      targetAngleOfset = 0;
-      delay(turnDelay);
-
-    } else {
-      Serial.println("Somthing about a wall");
-    }
-
+      }
       if (frontLeftVal == -1) {
         turningRight = false;
         counter++;
@@ -472,7 +560,7 @@ if(forward<70 && forward>2){
         counter = 0;
       }
 
-      if (counter == 2) {
+      if (counter == 3) {
         edgeFound = true;
       }
     }
@@ -521,7 +609,7 @@ void alongWall() {
       delay(5);
       if (counter == 5) {
 
-        setMotor(6);
+        setMotor(10);
         waiting = false;
       }
     }
@@ -543,7 +631,7 @@ void alongWall() {
       delay(10);
       if (counter == 3) {
         Serial.println("no more waiting");
-        setMotor(6);
+        setMotor(10);
         waiting = false;
       }
     }
@@ -578,7 +666,7 @@ void alongWall() {
     float distMultiplier = cos(targetAngleOfset * pi / 180);
 
     int estDist = distMultiplier * (front + back) / 2;
-    
+
     int ultraSonicDist = tfDist;
     Serial.print("\t\t\t\t front = ");
     Serial.print(forward);
@@ -686,21 +774,116 @@ void alongWall() {
   }
 }
 
-bool amIMovingCloser(int latestDist){
-  mo
-for(int i = 4; i>=0; i--){
+bool amIMovingCloser(int latestDist) {
 
 
+
+
+
+  if (movingCloser[0] != -1 && latestDist != -1) {
+    //Shift those bad boys along the array
+    for (int i = 0; i < 4; i++) {
+      movingCloser[i] = movingCloser[i + 1];
+    }
+
+    //Update the last entry in the array
+    movingCloser[4] = latestDist;
+
+
+    //comparte the averages of the first and last entries
+    int latest = (movingCloser[4] + movingCloser[3]) / 2;
+
+    int old = (movingCloser[0] + movingCloser[1]) / 2;
+
+    if (latest >= old) {
+      targetAngle -= 1;
+      setAngle(targetAngle);
+      return false;
+    }
+  }
+
+  return true;
+}
+
+int whereGo(int intention, int front, int back) {
+
+  if (turningRight) {
+    if (intention < 0) {
+      if (front > back) {
+        Serial.println("Moving towards the Wall");
+        targetAngle += 1;
+      } else {
+        Serial.println("I am happy man");
+      }
+
+    } else if (intention > 0) {
+
+      if (front < back) {
+        Serial.println("Moving away from the wall");
+        targetAngle -= 1;
+      } else {
+        Serial.println("I am happy man");
+      }
+    }
+
+  } else {
+
+    if (intention < 0) {
+      if (front > back) {
+        Serial.println("Moving towards the Wall");
+        targetAngle -= 1;
+      } else {
+        Serial.println("I am happy man");
+      }
+
+    } else if (intention > 0) {
+
+      if (front < back) {
+        Serial.println("Moving away from the wall");
+        targetAngle += 1;
+      } else {
+        Serial.println("I am happy man");
+      }
+    }
+  }
+  setAngle(targetAngle);
+
+  return 0;
+
+
+  /*
+if(movingCloser[0] != -1 && latestDist !=-1){
+  //Shift those bad boys along the array
+for(int i = 0; i<4; i++){
+movingCloser[i] = movingCloser[i+1];
 
 }
 
+//Update the last entry in the array
+  movingCloser[4] = latestDist;
 
+
+  //comparte the averages of the first and last entries
+int latest = (movingCloser[4]+movingCloser[3])/2
+
+int old = (movingCloser[0]+movingCloser[1])/2
+
+if(latest>=old){
+  targetAngle -= 1;
+  setAngle(targetAngle);
+  return false;
+
+}
+
+}
+
+return true;*/
 }
 
 void firstmovement() {
   setAngle(0);
-  int counter = 0;
-
+  int counterLeft = 0;
+  int counterRight = 0;
 
   bool edgeFound = false;
 
@@ -717,29 +900,41 @@ void firstmovement() {
 
 
     if (frontRightVal == -1) {
-      counter++;
+      counterRight++;
       turningRight = true;
-    } else if (frontLeftVal == -1) {
+    } else{
+      counterRight = 0;
+    }
+    
+     if (frontLeftVal == -1) {
       turningRight = false;
-      counter++;
+      counterLeft++;
 
     } else {
-      counter = 0;
+      counterLeft = 0;
     }
 
 
-    if (counter >= 2) {
+    if (counterLeft >= 6) {
       edgeFound = true;
+      turningRight=false;
+    }
+    if (counterRight >= 6) {
+      edgeFound = true;
+      turningRight=true;
     }
   }
   getLIDAR();
   firstWallDist = tfDist;
   if (turningRight) {
+
     Serial.println("--------Turning Right--------");
+   
     setAngle(deg90);
     targetAngle = deg90;
   } else {
     Serial.println("--------Turning Left--------");
+
     setAngle(-deg90);
     targetAngle = -deg90;
   }
@@ -941,7 +1136,7 @@ void waitForTurn() {
   Serial.println(currentAngle);
   Serial.println(targetAngle);
   if (!turningRight) {
-    while (currentAngle > targetAngle + 10) {
+    while (currentAngle > targetAngle + 5) {
       currentAngle = readAngle();
 
       Serial.println(currentAngle);
@@ -949,7 +1144,7 @@ void waitForTurn() {
       Serial.println("Waiting for Angle RIGHT");
     }
   } else {
-    while (currentAngle < targetAngle - 10) {
+    while (currentAngle < targetAngle - 5) {
       currentAngle = readAngle();
 
       Serial.println(currentAngle);
@@ -1459,7 +1654,7 @@ int getLIDAR() {
     return tfDist;
   } else tflI2C.printStatus();  // else, print error status.
 
-return -1;
+  return -1;
 }
 
 void displayAllDistances() {

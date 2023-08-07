@@ -34,7 +34,7 @@ long int gyroValue = 0;
 float gyroOfset = -20.79;
 
 int angleOld = -100;
-
+int servoAngleOld = -1000;
 
 void setup() {
 
@@ -133,7 +133,14 @@ void steer() {
   }
 
 
+
+
   int angleDiff = targetAngle + angle;
+
+ 
+
+
+    servoAngleOld = angleDiff;
   Serial.print("TRUE ANGLE- ");
   Serial.print(angle);
     Serial.print("\tAngle diff -- ");
@@ -147,9 +154,10 @@ void steer() {
     angleDiff = -maxSteering;
   }
 
-  int steeringAngle = angleDiff * 3 + 103;
+  int steeringAngle = angleDiff * 2 + 103;
   Serial.print("\tSteering angle - ");
   Serial.println(steeringAngle);
+  
   myservo.write(steeringAngle);
 }
 
@@ -211,18 +219,18 @@ void calibrateGyro() {
 
   long int totalDrift = 0;
 
-  for (int i = 0; i < 1000; i++) {
+  for (int i = 0; i < 3000; i++) {
 
 
     int gx, gy, gz;  // raw gyro values
 
     // read raw gyro measurements from device
     BMI160.readGyro(gx, gy, gz);
-    Serial.println(i);
+   // Serial.println(i);
     totalDrift += gz;
   }
 
-  gyroOfset = totalDrift / 1000.0;
+  gyroOfset = totalDrift / 3000.0;
 
   Serial.println("Gyro Offset");
   Serial.println(gyroOfset);

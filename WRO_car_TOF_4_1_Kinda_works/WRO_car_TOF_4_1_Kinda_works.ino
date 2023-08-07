@@ -728,7 +728,7 @@ void firstmovement() {
     }
 
 
-    if (counter >= 2) {
+    if (counter >= 6) {
       edgeFound = true;
     }
   }
