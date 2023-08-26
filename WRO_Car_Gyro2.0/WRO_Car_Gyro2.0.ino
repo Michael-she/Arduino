@@ -6,7 +6,7 @@
 #include <Wire.h>
 
 Servo myservo;
-const int select_pin = 10;
+
 const int i2c_addr = 0x69;
 
 const int servoPin = 2;
@@ -23,11 +23,10 @@ int seg1[] = { 15, 14, 13, 12, 11, 10, 9, 8 };
 
 int seg2[] = { 21, 17, 6, 16, 27, 20, 3, 7 };
 
-const int redLED = 12;
-const int greenLED = 11;
 
 
-SoftwareSerial comBus(8, 9);  // RX, TX
+
+
 
 long int oldTime = 0;
 long int gyroValue = 0;
@@ -125,12 +124,7 @@ void steer() {
   angle = gyroValue / 130000;  //checkGyro();
 
   
-  if(angleOld != angle){
-
-    updateSeg1(abs((angle%100)/10));
-    updateSeg2(abs(angle%10));
-    angleOld = angle;
-  }
+ 
 
 
 
@@ -153,7 +147,12 @@ void steer() {
   } else if (angleDiff < -maxSteering) {
     angleDiff = -maxSteering;
   }
+if(angleOld != angle){
 
+    updateSeg1(abs((angle%100)/10));
+    updateSeg2(abs(angle%10));
+    angleOld = angle;
+  }
   int steeringAngle = angleDiff * 2 + 103;
   Serial.print("\tSteering angle - ");
   Serial.println(steeringAngle);
@@ -177,20 +176,6 @@ void sendInt(int sendInt) {
   byte b2 = sendInt;
   Wire1.write(b1);
   Wire1.write(b2);
-}
-int checkSerial() {
-
-  if (comBus.available() > 0) {
-
-
-    int code = comBus.read();
-
-
-    Serial.println(code);
-    return code;
-  }
-
-  return -1;
 }
 
 void integrateZ() {

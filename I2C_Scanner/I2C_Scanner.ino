@@ -24,7 +24,8 @@ void loop() {
         Serial.print("0");
       Serial.print(address, HEX);
       Serial.println();
-
+ Serial.print(address, DEC);
+      Serial.println();
       devices++;
     }
     else if (error == 4) {
