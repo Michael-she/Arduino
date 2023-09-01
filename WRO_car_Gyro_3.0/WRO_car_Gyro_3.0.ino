@@ -39,7 +39,7 @@ for (int i = 0; i < 10; i++) {
   updateSeg2(0);
 bootAimation();
 
-  
+
   Serial.println("Adafruit BNO08x test!");
 delay(500);
 bootAimation();
@@ -80,14 +80,34 @@ bootAimation();
     delay(50);
   }
 
-  updateSeg1(0);
-  updateSeg2(0);
+  updateSeg1(8);
+  updateSeg2(8);
+delay(500);
+if(watchdog_enable_caused_reboot()){
+
+      Serial.println("Watchdog caused last reboot, proceeding.");
+    }else{
+      Serial.println("Watchdog did not cause last reboot, Reset.");
+      watchdog_enable(100, 1);
+    while (1) {
+       delay(10); 
+   }
+    }
+
+
+ updateSeg1(abs(((int)round(sensorValue.un.rotationVector.k*180))%100)/10);
+    updateSeg2(abs(((int)round(sensorValue.un.rotationVector.k*180))%10));
+
+    
 }
 
 // Here is where you define the sensor outputs you want to receive
 void setReports(void) {
   Serial.println("Setting desired reports");
   if (! bno08x.enableReport(SH2_GAME_ROTATION_VECTOR)) {
+    Serial.println("Could not enable game vector");
+  }
+  if (! bno08x.enableReport(SH2_ROTATION_VECTOR)) {
     Serial.println("Could not enable game vector");
   }
 }
@@ -113,9 +133,10 @@ void loop() {
       Serial.print(" i: ");
       Serial.print(sensorValue.un.gameRotationVector.i);
       Serial.print(" j: ");
-      Serial.print(sensorValue.un.gameRotationVector.j);
+      Serial.print(sensorValue.un.rotationVector.k);
       Serial.print(" k: ");
-      int angle = round(sensorValue.un.gameRotationVector.k*180);
+      
+      int angle = round(sensorValue.un.rotationVector.k*180);
       Serial.println(trueAngle);
      
 
