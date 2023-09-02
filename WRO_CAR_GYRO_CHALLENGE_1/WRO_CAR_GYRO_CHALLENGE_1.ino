@@ -278,7 +278,7 @@ int angleDiff = (displayAngle-targetAngle);
 
 
 
-int maxSteering = ;
+int maxSteering = 60;
   if (angleDiff > maxSteering) {
     angleDiff = maxSteering;
   } else if (angleDiff < -maxSteering) {
@@ -296,9 +296,9 @@ int maxSteeringAng = 60;
   }
 
 steeringAngle +=70;
-Serial.print(displayAngle);
-Serial.print("    ");
-Serial.println(targetAngle);
+//Serial.print(displayAngle);
+//Serial.print("    ");
+//Serial.println(targetAngle);
   myservo.write(steeringAngle);
 
 

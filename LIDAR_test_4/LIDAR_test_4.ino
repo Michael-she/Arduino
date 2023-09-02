@@ -11,10 +11,7 @@ int8_t motorSpeed = 0;
 int forward_pin = 2;
 int backward_pin = 3;
 
-#define BUF_SIZE 16384
-volatile uint8_t buf[BUF_SIZE];
-volatile int buf_head = 0;
-volatile int buf_tail = 0;
+
 
 
 const int led1Pin = 14;
@@ -131,7 +128,7 @@ Wire.begin(13); //mOTOR
   // Configure Serial2 pins
   Serial2.setTX(8);
   Serial2.setRX(9);
-
+Serial2.setFIFOSize(131072);
   // Initialize other required hardware
   pinMode(25, OUTPUT);
   digitalWrite(25, HIGH);
@@ -188,45 +185,9 @@ digitalWrite(ledDirPin, LOW);
   }
   binEncode(motorSpeed);
   Serial.println("BOOTDIN");
- Serial.attachInterrupt(handleSerial);
+
   pinMode(7, OUTPUT);
 }
-
-void loop() {
-  digitalWrite(7, LOW);
-  delay(50);
-  if (Serial2.available()) {
-    uint8_t receivedChar = Serial2.read();
-
-    // Check if the character is a delimiter (newline character in this case)
-    if (receivedChar == '\n') {
-      // A full packet is received; time to process
-      //Serial.print("Received: ");
-      // for (unsigned int i = 0; i < size; ++i) {
-
-      //  Serial.print(receivedData[i], HEX);
-      // }
-      // Serial.println();
-      if (parse(receivedData, size)) {
-        //  Serial.println("true");
-        displayDistances();
-      } else {
-        // Serial.println("false");
-      }
-      // Clear the receivedData string for the next packet
-      for (int i = 0; i < size; i++) {
-        receivedData[i] = 0;
-      }
-      size = 0;
-      // Serial.println("Reset Arr");
-    } else {
-      // Append the received character to the string buffer
-      receivedData[size] = receivedChar;
-      size++;
-    }
-  }
-}
-
 
 
 
@@ -283,7 +244,7 @@ void loop1() {
       //Serial.println(">0");
     }
     if (motorSpeed == 1) {
-      delay(5);
+      delay(1);
     }
     if (motorSpeed == 2) {
       delay(10);
@@ -320,7 +281,7 @@ void loop1() {
       delay(4);
     }
     if (motorSpeed == -1) {
-      delay(5);
+      delay(1);
     }
     if (motorSpeed == -2) {
       delay(10);
@@ -434,15 +395,15 @@ Serial.println("Recieve");
 
   int16_t index = recieveInt();
 
-  Serial.println(index);
- Serial.println(distances[index]);
+ // Serial.println(index);
+ //Serial.println(distances[index]);
 
 command = index;
 
 }
 
 void requestEvent() {
-
+//Serial.println("REQ");
 if(command == 1000){
   for(int i = 0; i<360; i++){
 
@@ -453,7 +414,8 @@ sendInt(distances[i]);
 }
 
 if (command >= 0 && command <= 360){
-  Serial.println("Sending angle");
+ // Serial.println("Sending angle");
+ // Serial.println("Sending angle");
   sendInt(distances[command]);
 }
 }
@@ -468,11 +430,22 @@ bool parse(const uint8_t* data, long len) {
 
 
   if (mDataTmp.size() < sizeof(LiDARFrameTypeDef)) {
-    //Serial.println("toosml");
+//     Serial.println("toosml");
+//     for(int i = 0; i<mDataTmp.size(); i++){
+//     Serial.print(mDataTmp[i]);
+//  if ((mDataTmp[i] == PKG_HEADER) && (mDataTmp[i + 1] == PKG_VER_LEN)) {
+//         //Serial.println("Packet Header Found");
+        
+//       }
+//     }
+
+   
+
+
     return false;
   }
   if (mDataTmp.size() > sizeof(LiDARFrameTypeDef) * 100) {
-    // Serial.println("TooBg");
+     Serial.println("TooBg");
     mErrorTimes++;
     mDataTmp.clear();
     return false;
@@ -485,7 +458,11 @@ bool parse(const uint8_t* data, long len) {
     start = 0;
     while (start < mDataTmp.size() - 2) {
       if ((mDataTmp[start] == PKG_HEADER) && (mDataTmp[start + 1] == PKG_VER_LEN)) {
-        //Serial.println("Packet Header Found");
+    //    for(int i = 0; i<mDataTmp.size(); i++){
+    // Serial.print(mDataTmp[i]);
+    //    }
+    //    Serial.println();
+    //    Serial.println(start);
         break;
       }
 
@@ -506,7 +483,7 @@ bool parse(const uint8_t* data, long len) {
 
     if (mDataTmp.size() < sizeof(LiDARFrameTypeDef)) {
       //Serial.println("No front found");
-      return false;
+     return false;
     }
     //Serial.println("CRC");
     LiDARFrameTypeDef* pkg = (LiDARFrameTypeDef*)mDataTmp.data();
@@ -520,7 +497,7 @@ bool parse(const uint8_t* data, long len) {
       double diff = (pkg->end_angle / 100 - pkg->start_angle / 100 + 360) % 360;
       if (diff > (double)pkg->speed * POINT_PER_PACK / 2300 * 3 / 2) {
         mErrorTimes++;
-        //Serial.println("error");
+        Serial.println("error");
       } else {
         mSpeed = pkg->speed;
         mTimestamp = pkg->timestamp;
@@ -540,13 +517,15 @@ bool parse(const uint8_t* data, long len) {
           // Serial.print(	" - ");
            // Serial.println(	data.angle);
             
+
+
       if((int)data.angle != 0){
-        
+       // Serial.println(data.angle);
           distances[(int)data.angle] = data.distance;
       }else{
 
   distances[0] = distances[1];
-
+  
       }
           data.angle = start + i * step;
           if (data.angle >= 360.0) {
@@ -578,6 +557,9 @@ bool parse(const uint8_t* data, long len) {
         break;
       }
     } else {
+
+    //  Serial.println("Something about CRC");
+      //Serial.println(pkg->point[0].distance);
       mErrorTimes++;
       /*only remove header,not all frame,because lidar data may contain head*/
       for (int i = 0; i < 2; i++) {
@@ -598,17 +580,4 @@ void displayDistances() {
     Serial.print(" ");
   }
   Serial.println(" ");
-}
-
-void handleSerial() {
-  while (Serial.available()) {
-    char ch = (char)Serial.read();
-    int next_head = (buf_head + 1) % BUF_SIZE;
-
-    // Check for buffer overflow and update buffer
-    if (next_head != buf_tail) {
-      buf[buf_head] = ch;
-      buf_head = next_head;
-    }
-  }
 }

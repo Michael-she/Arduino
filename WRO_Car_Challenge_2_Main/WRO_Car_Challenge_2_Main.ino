@@ -38,6 +38,9 @@ void setup() {
 
   pinMode(2, INPUT);
 
+  pinMode(8, INPUT);
+  pinMode(9, INPUT);
+
 setAngle(0);
 setMotor(0);
   if (getAngle() == 0) {
@@ -51,20 +54,28 @@ void loop() {
   // put your main code here, to run repeatedly:
   while (digitalRead(2) == LOW) {
     delay(10);
-    Serial.println(getAngle());
+    Serial.println(getHug());
     Serial.println("   ");
     Serial.println("Waiting");
+
   }
+
+  
   delay(1000);
 
+
+ setMotor(3);
+  setAngle(0);
+
   while (true) {
-    firstMovement();
-    delay(2500);
+    //firstMovement();
+    //delay(2500);
     for (int i = 0; i < 11; i++) {
       goFourth();
+      setMotor(5);
       waitForTargetAngle();
-      waitForWall();
-      delay(500);
+      setMotor(3);
+      
     }
     setMotor(0);
     delay(200000);
@@ -81,12 +92,69 @@ void goFourth() {
   int rightCounter = 0;
   int leftCounter = 0;
 
+  bool huggingLeftWall = false;
+  bool huggingRightWall = false;
+
   while (!edgeFound) {
     int frontDist = getDistance(front);
+
+     int hug = getHug();
+
+     Serial.print("Hug = ");
+    Serial.print(hug);
+
+Serial.print("  Angle -");
+   // 8 is on the right, 9 is on the left
+      if(hug == 1){
+        huggingRightWall = false;
+        if(!huggingLeftWall){
+          delay(50);
+       setAngle(targetAngle+30);
+       delay(20);
+        Serial.print(targetAngle+30);
+bool touchingWall = false;
+int counter = 0;
+        while(!touchingWall){
+delay(10);
+Serial.print("Waiting");
+if(digitalRead(9) == HIGH){
+counter++;
+
+}else{
+  counter == 0;
+}
+if(counter == 2){
+  touchingWall = true;
+}
+
+        }
+        setAngle(targetAngle+90);
+        setMotor(-3);
+        delay(500);
+        setAngle(targetAngle);
+        setMotor(3);
+        huggingLeftWall = true;
+      
+        }
+       // }else{
+          
+       // }
+
+      }else if(hug == 2){
+     
+
+      }else {
+ // setAngle(targetAngle);
+  Serial.print(" Nothing Found");
+}
+
+Serial.println("");
     if (turnRight) {
+
+     
       int rightDist = getDistance(right);
 
-      Serial.println(rightDist);
+     // Serial.print(rightDist);
 
 
       if (rightDist > 100) {
@@ -139,8 +207,7 @@ void goFourth() {
 void firstMovement() {
 
 
-  setMotor(5);
-  setAngle(0);
+ 
 
 
 
@@ -196,6 +263,14 @@ void firstMovement() {
   }
 }
 
+
+int getHug(){
+Wire1.requestFrom(8, 2);
+int16_t hug = recieveInt();
+
+return hug;
+}
+
 void waitForTargetAngle() {
   setAngle(targetAngle);
 
@@ -209,61 +284,10 @@ void waitForTargetAngle() {
   }
 }
 
-
-void waitForWall(){
-
-
-int rightCounter = 0;
-int leftCounter = 0;
-bool wallFound = false;
-  while(!wallFound){
-
- if (turnRight) {
-      int rightDist = getDistance(right);
-
-      Serial.println(rightDist);
-
-
-      if (rightDist < 100) {
-        rightCounter++;
-      } else {
-        rightCounter = 0;
-        
-      }
-      if (rightCounter == numShots*5) {
-        wallFound = true;
-      }
-
-
-
-
-    } else {
-      int leftDist = getDistance(left);
-
-
-      Serial.println(leftDist);
-
-      if (leftDist < 100) {
-        leftCounter++;
-      } else {
-        leftCounter = 0;
-
-      }
-
-
-
-      if (leftCounter == numShots*5) {
-        wallFound = true;
-      
-      }
-    }
-
-  }
-}
-void setAngle(int targetAngle) {
+void setAngle(int inAngle) {
 
   Wire1.beginTransmission(12);
-  sendInt(targetAngle);
+  sendInt(inAngle);
   Wire1.endTransmission();
 }
 
