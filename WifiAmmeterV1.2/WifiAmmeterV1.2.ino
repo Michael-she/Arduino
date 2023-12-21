@@ -7,8 +7,8 @@ const int analogPin = 36;
 const int red = 12;
 const int green = 14;
 const int blue = 27;
-const int resistor = 120;
-const int transformerMultiplier = 2000;
+const int resistor = 44;
+const int transformerMultiplier = 1000;
 
 const char* ssid = "3VG WiFi";
 const char* password = "3vangogh@*";
@@ -17,7 +17,7 @@ int sendInterval = 10;
 
 const char* serverName = "https://current-sensor-webapp-michael-she.vercel.app/inputCSV"; // Replace with your server's URL
 
-String id = "6543248987";
+String id = "02357986576564";
 
 
 
@@ -73,12 +73,12 @@ void loop() {
 
     }
 digitalWrite(green, LOW);
-    float aveAmps = ampsSum/(sendInterval);
+    float aveAmps = ampsSum/(sendInterval*10);
 
-    float power = aveAmps*220*sendInterval;
+    float power = aveAmps*220*sendInterval/3600;
 
     toSend+=toAmpString(aveAmps)+","+toAmpString(maxAmps)+","+toAmpString(minAmps)+","+toAmpString(power);
-
+    Serial.println(toSend);
     sendPackets(toSend);
 
  
@@ -140,15 +140,18 @@ float getAmps(int inPin){
 int analogValue = analogRead(inPin);
 
   // Convert the analog value to voltage
-  float voltage = analogValue * (4 / 4095.0);
+  float voltage = analogValue * (3.3 / 4095.0);
 
   // Print the value and voltage to the Serial Monitor
   //Serial.print("Analog Value: ");
  // Serial.print(analogValue);
  // Serial.print(" | Voltage: ");
- 
-
-  float amps = (voltage/resistor) *transformerMultiplier/2;
+ if(voltage!=0){
+   voltage+=0.13;
+ }
+  Serial.print(voltage);
+  Serial.print("  ");
+  float amps = (voltage/resistor) *transformerMultiplier*2;
  Serial.println(amps);
 
   // Wait for a bit before reading again
