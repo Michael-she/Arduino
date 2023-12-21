@@ -60,12 +60,16 @@ void loop() {
   while (true) {
     firstMovement();
     delay(2500);
-    for (int i = 0; i < 11; i++) {
+    for (int i = 0; i < 10; i++) {
       goFourth();
       waitForTargetAngle();
       waitForWall();
       delay(500);
     }
+    goFourth();
+      waitForTargetAngle();
+      
+    
     setMotor(0);
     delay(200000);
   }
@@ -139,7 +143,7 @@ void goFourth() {
 void firstMovement() {
 
 
-  setMotor(5);
+  setMotor(10);
   setAngle(0);
 
 
