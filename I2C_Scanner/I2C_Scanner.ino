@@ -20,7 +20,7 @@ void loop() {
 
     if (error == 0) {
       Serial.print("Device found at address 0x");
-      if (address < 16)
+      if (address < 1)
         Serial.print("0");
       Serial.print(address, HEX);
       Serial.println();
