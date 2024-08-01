@@ -1,15 +1,16 @@
 #ifndef ELOQUENT_ESP32CAM_VIZ_MJPEG
 #define ELOQUENT_ESP32CAM_VIZ_MJPEG
 
-#include "../camera/Camera.h"
+#include "../camera/camera.h"
 #include "../extra/exception.h"
 #include "../extra/esp32/wifi/sta.h"
 #include "../extra/esp32/http/server.h"
 
 using eloq::camera;
 using eloq::wifi;
-using Eloquent::Extra::Exception;
+using Eloquent::Error::Exception;
 using Eloquent::Extra::Esp32::Http::HttpServer;
+using OnFrameCallback = std::function<void(WiFiClient*, camera_fb_t*)>;
 
 namespace Eloquent {
     namespace Esp32cam {
@@ -29,7 +30,9 @@ namespace Eloquent {
                         exception("Mjpeg"),
                         server("Mjpeg", MJPEG_HTTP_PORT),
                         _paused(false),
-                        _stopped(false) {
+                        _stopped(false),
+                        _delay(50),
+                        _onFrame(NULL) {
 
                         }
 
@@ -41,12 +44,20 @@ namespace Eloquent {
                     }
 
                     /**
+                     * Limit FPS
+                     * @param fps
+                     */
+                    void maxFPS(uint8_t fps) {
+                        _delay = 1000.0f / fps;
+
+                        if (_delay < 1)
+                            _delay = 1;
+                    }
+
+                    /**
                      * Start server
                      */
                     Exception& begin() {
-                        if (!wifi.isConnected())
-                            return exception.set("WiFi not connected");
-
                         onJpeg();
                         onMjpeg();
                         onHtml();
@@ -82,9 +93,19 @@ namespace Eloquent {
                         _stopped = true;
                     }
 
+                    /**
+                     * Set callback to run on each streamed frame
+                     * @param onFrame
+                     */
+                    void onFrame(OnFrameCallback onFrame) {
+                        _onFrame = onFrame;
+                    }
+
                 protected:
                     bool _paused;
                     bool _stopped;
+                    uint16_t _delay;
+                    OnFrameCallback _onFrame;
 
                     /**
                      * Register / endpoint to get Mjpeg stream
@@ -103,8 +124,12 @@ namespace Eloquent {
                             client.println(F("Access-Control-Allow-Origin: *"));
                             client.println(F("\r\n--frame"));
 
+                            size_t last = millis();
+
                             while (true) {
-                                delay(1);
+                                while (millis() - last < _delay)
+                                    delay(1);
+
                                 yield();
 
                                 if (_paused)
@@ -119,12 +144,16 @@ namespace Eloquent {
                                 if (!camera.capture().isOk())
                                     continue;
 
+                                if (_onFrame != NULL)
+                                    _onFrame(&client, camera.frame);
+
                                 client.print("Content-Type: image/jpeg\r\nContent-Length: ");
                                 client.println(camera.frame->len);
                                 client.println();
                                 client.write((const char *) camera.frame->buf, camera.frame->len);
                                 client.println(F("\r\n--frame"));
                                 client.flush();
+                                last = millis();
                             }
                         });
                     }
@@ -164,7 +193,7 @@ namespace Eloquent {
                                 return;
                             }
                             
-                            String html = String("<img src=\"http://") + wifi.ip() + ":81\" />";
+                            String html = String("<img src=\"http://") + wifi.ip() + ":" + String(MJPEG_HTTP_PORT) + "\" />";
                             web->send(200, "text/html", html);
                         });
                     }

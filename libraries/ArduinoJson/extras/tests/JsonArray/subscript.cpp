@@ -7,8 +7,7 @@
 #include <catch.hpp>
 
 #include "Allocators.hpp"
-
-using ArduinoJson::detail::sizeofArray;
+#include "Literals.hpp"
 
 TEST_CASE("JsonArray::operator[]") {
   SpyingAllocator spy;
@@ -131,7 +130,7 @@ TEST_CASE("JsonArray::operator[]") {
   }
 
   SECTION("should duplicate std::string") {
-    array[0] = std::string("world");
+    array[0] = "world"_s;
     REQUIRE(spy.log() == AllocatorLog{
                              Allocate(sizeofPool()),
                              Allocate(sizeofString("world")),
@@ -152,7 +151,7 @@ TEST_CASE("JsonArray::operator[]") {
     array.add("hello");
     array[0].set(vla);
 
-    REQUIRE(std::string("world") == array[0]);
+    REQUIRE("world"_s == array[0]);
   }
 
   SECTION("operator=(VLA)") {
@@ -163,22 +162,16 @@ TEST_CASE("JsonArray::operator[]") {
     array.add("hello");
     array[0] = vla;
 
-    REQUIRE(std::string("world") == array[0]);
+    REQUIRE("world"_s == array[0]);
   }
 #endif
-}
 
-TEST_CASE("JsonArrayConst::operator[]") {
-  JsonDocument doc;
-  JsonArray array = doc.to<JsonArray>();
-  array.add(0);
+  SECTION("Use a JsonVariant as index") {
+    array[0] = 1;
+    array[1] = 2;
+    array[2] = 3;
 
-  SECTION("int") {
-    array[0] = 123;
-    JsonArrayConst carr = array;
-
-    REQUIRE(123 == carr[0].as<int>());
-    REQUIRE(true == carr[0].is<int>());
-    REQUIRE(false == carr[0].is<bool>());
+    REQUIRE(array[array[1]] == 3);
+    REQUIRE(array[array[3]] == nullptr);
   }
 }

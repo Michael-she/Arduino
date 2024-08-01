@@ -6,6 +6,8 @@
 #include <stdint.h>
 #include <catch.hpp>
 
+#include "Literals.hpp"
+
 TEST_CASE("JsonVariant::containsKey()") {
   JsonDocument doc;
   JsonVariant var = doc.to<JsonVariant>();
@@ -20,23 +22,15 @@ TEST_CASE("JsonVariant::containsKey()") {
   SECTION("containsKey(std::string)") {
     var["hello"] = "world";
 
-    REQUIRE(var.containsKey(std::string("hello")) == true);
-    REQUIRE(var.containsKey(std::string("world")) == false);
-  }
-}
-
-TEST_CASE("JsonVariantConst::containsKey()") {
-  JsonDocument doc;
-  doc["hello"] = "world";
-  JsonVariantConst cvar = doc.as<JsonVariant>();
-
-  SECTION("containsKey(const char*) returns true") {
-    REQUIRE(cvar.containsKey("hello") == true);
-    REQUIRE(cvar.containsKey("world") == false);
+    REQUIRE(var.containsKey("hello"_s) == true);
+    REQUIRE(var.containsKey("world"_s) == false);
   }
 
-  SECTION("containsKey(std::string) returns true") {
-    REQUIRE(cvar.containsKey(std::string("hello")) == true);
-    REQUIRE(cvar.containsKey(std::string("world")) == false);
+  SECTION("containsKey(JsonVariant)") {
+    var["hello"] = "world";
+    var["key"] = "hello";
+
+    REQUIRE(var.containsKey(doc["key"]) == true);
+    REQUIRE(var.containsKey(doc["foo"]) == false);
   }
 }

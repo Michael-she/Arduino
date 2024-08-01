@@ -14,7 +14,7 @@
 #include "../extra/time/rate_limit.h"
 #include "../extra/esp32/multiprocessing/mutex.h"
 
-using Eloquent::Extra::Exception;
+using Eloquent::Error::Exception;
 using Eloquent::Extra::Time::RateLimit;
 using Eloquent::Extra::Esp32::Multiprocessing::Mutex;
 
@@ -85,6 +85,7 @@ namespace Eloquent {
                         config.frame_size = resolution.framesize;
                         config.jpeg_quality = quality.quality;
                         config.xclk_freq_hz = xclk.freq;
+                        config.grab_mode = CAMERA_GRAB_LATEST;
 
                         // init
                         if (esp_camera_init(&config) != ESP_OK)
@@ -96,11 +97,20 @@ namespace Eloquent {
                     }
 
                     /**
+                     * Manually set frame
+                     *
+                     * @param newFrame
+                     */
+                    void setFrame(camera_fb_t *newFrame) {
+                        frame = newFrame;
+                    }
+
+                    /**
                      * Capture new frame
                      */
                     Exception& capture() {
                         if (!rateLimit)
-                            return exception.set("Too many requests for frame");
+                            return exception.soft().set("Too many requests for frame");
 
                         mutex.threadsafe([this]() {
                             free();

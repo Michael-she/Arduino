@@ -8,7 +8,7 @@
 #include "../extra/exception.h"
 #include "../extra/benchmark.h"
 
-using Eloquent::Extra::Exception;
+using Eloquent::Error::Exception;
 using Eloquent::Extra::Benchmark;
 using namespace eloq;
 
@@ -24,7 +24,7 @@ struct JpegDecoding {
  * @param data
  * @return
  */
-unsigned char pjpegConsume(unsigned char* dest, unsigned char chunkSize, unsigned char *read, void *data) {
+unsigned char _pjpegConsumeGray(unsigned char* dest, unsigned char chunkSize, unsigned char *read, void *data) {
     JpegDecoding *decoding = (JpegDecoding*) data;
 
     if (!camera.hasFrame()) {
@@ -95,12 +95,12 @@ namespace Eloquent {
 
                     if (gray.pixels == NULL) {
                         ESP_LOGI("JPEG", "Allocating memory for decoding");
-                        gray.pixels = (uint8_t*) malloc(camera.resolution.getWidth() / 8 * camera.resolution.getHeight() / 8);
+                        gray.pixels = (uint8_t*) ps_malloc(camera.resolution.getWidth() / 8 * camera.resolution.getHeight() / 8);
                     }
 
                     benchmark.start();
 
-                    if (status = pjpeg_decode_init(&jpeg, pjpegConsume, (void *) &decoding, 1)) {
+                    if (status = pjpeg_decode_init(&jpeg, _pjpegConsumeGray, (void *) &decoding, 1)) {
                         benchmark.stop();
                         return exception.set(String("JPEG decode error: ") + status);
                     }

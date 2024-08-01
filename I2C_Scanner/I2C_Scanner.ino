@@ -1,9 +1,11 @@
 #include <Wire.h>
 
 void setup() {
-  Wire.begin();
-  Serial.begin(9600);
-  while (!Serial);
+  
+  Serial.begin(115200);
+    Wire1.setSDA(2);
+  Wire1.setSCL(3);
+  Wire1.begin();
 
   Serial.println("\nI2C Scanner");
 }
@@ -15,8 +17,8 @@ void loop() {
   Serial.println("Scanning...");
 
   for (address = 1; address < 127; address++) {
-    Wire.beginTransmission(address);
-    error = Wire.endTransmission();
+    Wire1.beginTransmission(address);
+    error = Wire1.endTransmission();
 
     if (error == 0) {
       Serial.print("Device found at address 0x");
@@ -42,5 +44,5 @@ void loop() {
   else
     Serial.println("Scan complete\n");
 
-  delay(1000);  // Wait 5 seconds before scanning again
+  delay(3000);  // Wait 5 seconds before scanning again
 }

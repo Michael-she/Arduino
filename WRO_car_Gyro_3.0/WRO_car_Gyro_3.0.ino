@@ -278,7 +278,7 @@ int angleDiff = (displayAngle-targetAngle);
 
 
 
-int maxSteering = ;
+int maxSteering = 30;
   if (angleDiff > maxSteering) {
     angleDiff = maxSteering;
   } else if (angleDiff < -maxSteering) {

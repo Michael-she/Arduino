@@ -15,12 +15,6 @@ TEST_CASE("JsonObject::containsKey()") {
     REQUIRE(true == obj.containsKey("hello"));
   }
 
-  SECTION("works with JsonObjectConst") {
-    JsonObjectConst cobj = obj;
-    REQUIRE(false == cobj.containsKey("world"));
-    REQUIRE(true == cobj.containsKey("hello"));
-  }
-
   SECTION("returns false after remove()") {
     obj.remove("hello");
 
@@ -36,4 +30,10 @@ TEST_CASE("JsonObject::containsKey()") {
     REQUIRE(true == obj.containsKey(vla));
   }
 #endif
+
+  SECTION("key is a JsonVariant") {
+    doc["key"] = "hello";
+    REQUIRE(true == obj.containsKey(obj["key"]));
+    REQUIRE(false == obj.containsKey(obj["hello"]));
+  }
 }

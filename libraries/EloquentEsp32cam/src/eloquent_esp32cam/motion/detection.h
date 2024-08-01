@@ -9,7 +9,7 @@
 #include "./daemon.h"
 
 using eloq::camera;
-using Eloquent::Extra::Exception;
+using Eloquent::Error::Exception;
 using Eloquent::Extra::Time::Benchmark;
 using Eloquent::Extra::Time::RateLimit;
 #if defined(ELOQUENT_EXTRA_PUBSUB_H)
@@ -103,7 +103,7 @@ namespace Eloquent {
                     Exception& run() {
                         // skip fre first frames
                         if (_skip > 0 && _skip-- > 0)
-                            return exception.set("Skipping fre frames...");
+                            return exception.set(String("Still ") + _skip + " frames to skip...");
                             
                         // convert JPEG to RGB565
                         // this reduces the frame to 1/8th
@@ -112,7 +112,7 @@ namespace Eloquent {
 
                         // first frame, only copy frame to prev
                         if (_prev == NULL) {
-                            _prev = (uint16_t*) malloc(camera.rgb565.length * sizeof(uint16_t));
+                            _prev = (uint16_t*) ps_malloc(camera.rgb565.length * sizeof(uint16_t));
                             copy(camera.rgb565);
 
                             return exception.set("First frame, can't detect motion").soft();
