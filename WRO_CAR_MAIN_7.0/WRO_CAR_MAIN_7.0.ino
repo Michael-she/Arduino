@@ -1,3 +1,5 @@
+
+
 #include <Wire.h>
 
 
@@ -7,7 +9,7 @@
 #include <TFLI2C.h>  // TFLuna-I2C Library v.0.1.1
 TFLI2C tflI2C;
 
-int numShots = 100;
+int numShots = 10;
 
 int8_t front = 0x61;
 int8_t left = 0x62;
@@ -20,6 +22,8 @@ int trueAngle = 0;
 int angleAjustment = 45;
 
 float wallThreshHold = 2;
+
+int turningCircle = 20;
 
 void setup() {
   // put your setup code here, to run once:
@@ -36,7 +40,7 @@ void setup() {
   Wire.begin();
 
 
-  pinMode(2, INPUT);
+  
 
 setAngle(0);
 setMotor(0);
@@ -49,15 +53,15 @@ setMotor(0);
 
 void loop() {
   // put your main code here, to run repeatedly:
-  while (digitalRead(2) == LOW) {
-    delay(10);
-    Serial.println(getAngle());
-    Serial.println("   ");
-    Serial.println("Waiting");
-  }
-  delay(1000);
+delay(20000);
 
-  while (true) {
+
+ delay(1000);
+
+ int startingFrontDistace = getDistance(front);
+int startingLeftDistance = getDistance(left);
+  int startingRightDistance = getDistance(right);
+  
     firstMovement();
     delay(2500);
     for (int i = 0; i < 10; i++) {
@@ -66,13 +70,16 @@ void loop() {
       waitForWall();
       delay(500);
     }
-    goFourth();
+    finalMovement();
       waitForTargetAngle();
       
     
-    setMotor(0);
-    delay(200000);
-  }
+   while(getDistance(front)>startingFrontDistace){ // Wait until the distance to the front sensor is less than it was when you started
+     delay(10);
+   }
+
+   setMotor(0);
+ 
 }
 
 void goFourth() {
@@ -143,7 +150,7 @@ void goFourth() {
 void firstMovement() {
 
 
-  setMotor(10);
+  setMotor(7);
   setAngle(0);
 
 
@@ -217,9 +224,9 @@ void waitForTargetAngle() {
 void waitForWall(){
 
 
-int rightCounter = 0;
-int leftCounter = 0;
-bool wallFound = false;
+  int rightCounter = 0;
+  int leftCounter = 0;
+  bool wallFound = false;
   while(!wallFound){
 
  if (turnRight) {
@@ -309,21 +316,29 @@ int getLidarAngle(int angleIn) {
 
 
 void setMotor(int8_t motorNum) {
-  Serial.println("Transmitting Wire");
+  Serial.print("Transmitting Wire  ");
+  Serial.println(motorNum);
   Wire1.beginTransmission(13);
 
 
-  byte motorState = motorNum;
-  Wire1.write(motorState);
+  int16_t motorState = motorNum;
+ sendInt(motorState);
 
 
-  Wire1.endTransmission();
+     byte error = Wire1.endTransmission();
+    Serial.println(error);
+
+
 }
 
 void sendInt(int sendInt) {
-  short int split = sendInt;
+  int16_t split = sendInt;
+ // Serial.println(split, BIN);
   byte b1 = split >> 8;
   byte b2 = split;
+  // Serial.print(b1, BIN);
+  // Serial.print(" | ");
+  // Serial.println(b2, BIN);
   Wire1.write(b1);
   Wire1.write(b2);
 }

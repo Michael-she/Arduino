@@ -217,9 +217,9 @@ void waitForTargetAngle() {
 void waitForWall(){
 
 
-int rightCounter = 0;
-int leftCounter = 0;
-bool wallFound = false;
+  int rightCounter = 0;
+  int leftCounter = 0;
+  bool wallFound = false;
   while(!wallFound){
 
  if (turnRight) {

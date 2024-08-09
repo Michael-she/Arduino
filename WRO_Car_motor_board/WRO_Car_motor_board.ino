@@ -6,10 +6,10 @@
 int motorSpeed = 0;
 
 
-const int led1Pin = 12;
-const int led2Pin = 11;
-const int led4Pin = 10;
-const int led8Pin = 9;
+const int led1Pin = 16;
+const int led2Pin = 18;
+const int led4Pin = 21;
+const int led8Pin = 17;
 
 
 
@@ -61,78 +61,64 @@ digitalWrite(led8Pin, LOW);
 void loop() {
 
 
+  if(motorSpeed < 0){
+    digitalWrite(3, HIGH);
+  }else{
+    digitalWrite(3, LOW);
+  }
 
+  
  
-    digitalWrite(2, LOW);
-
-
-    if (motorSpeed == 1) {
+    if (motorSpeed == 1 || motorSpeed == -1) {
       delay(20);
     }
-    if (motorSpeed == 2) {
+    if (motorSpeed == 2 || motorSpeed == -2) {
+      delay(10);
+    }
+    if (motorSpeed == 3 || motorSpeed == -3) {
+      delay(10);
+    }
+    if (motorSpeed == 4 || motorSpeed == -4) {
       delay(15);
     }
-    if (motorSpeed == 3) {
+    if (motorSpeed == 5 || motorSpeed == -5) {
       delay(10);
     }
-    if (motorSpeed == 4) {
-      delay(15);
-    }
-    if (motorSpeed == 5) {
-      delay(10);
-    }
-    if (motorSpeed == 6) {
+    if (motorSpeed == 6 || motorSpeed == -6) {
       delay(8);
     }
-    if (motorSpeed == 7) {
+    if (motorSpeed == 7 || motorSpeed == -7) {
       delay(6);
     }
-    if (motorSpeed == 8) {
-      delay(4);
+   
+   digitalWrite(2, HIGH);
+
+   if (motorSpeed == 0) {
+      delay(0);
     }
-    if (motorSpeed == 9) {
+    if (motorSpeed == 1 || motorSpeed == -1) {
+      delay(1);
+    }
+    if (motorSpeed == 2 || motorSpeed == -2) {
+      delay(1);
+    }
+    if (motorSpeed == 3 || motorSpeed == -3) {
       delay(2);
     }
-    if (motorSpeed == 10) {
+    if (motorSpeed == 4 || motorSpeed == -4) {
+      delay(3);
     }
-    
-
-
-    if (motorSpeed > 0) {
-      digitalWrite(2, HIGH);
-      delay(4);
+    if (motorSpeed == 5 || motorSpeed == -5) {
+      delay(6);
     }
-    if (motorSpeed == 1) {
-      delay(5);
-    }
-    if (motorSpeed == 2) {
-      delay(10);
-    }
-    if (motorSpeed == 3) {
-      delay(5);
-    }
-    if (motorSpeed == 4) {
-      delay(10);
-    }
-    if (motorSpeed == 5) {
-      delay(10);
-    }
-    if (motorSpeed == 6) {
+    if (motorSpeed == 6 || motorSpeed == -6) {
       delay(8);
     }
-    if (motorSpeed == 7) {
-      delay(6);
-    }
-    if (motorSpeed == 8) {
-      delay(4);
-    }
-    if (motorSpeed == 9) {
-      delay(2);
-    }
-    if (motorSpeed == 10) {
+    if (motorSpeed == 7 || motorSpeed == -7) {
       delay(10);
     }
   
+
 
 
   
@@ -191,7 +177,7 @@ int recieveInt() {
 
 
 
-void receiveEvent() {
+void receiveEvent(int length) {
   
   
   

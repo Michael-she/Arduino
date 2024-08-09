@@ -3,9 +3,9 @@
 void setup() {
   
   Serial.begin(115200);
-    Wire1.setSDA(2);
-  Wire1.setSCL(3);
-  Wire1.begin();
+    Wire.setSDA(4);
+  Wire.setSCL(5);
+  Wire.begin();
 
   Serial.println("\nI2C Scanner");
 }
@@ -17,8 +17,8 @@ void loop() {
   Serial.println("Scanning...");
 
   for (address = 1; address < 127; address++) {
-    Wire1.beginTransmission(address);
-    error = Wire1.endTransmission();
+    Wire.beginTransmission(address);
+    error = Wire.endTransmission();
 
     if (error == 0) {
       Serial.print("Device found at address 0x");

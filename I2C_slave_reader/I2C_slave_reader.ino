@@ -18,13 +18,13 @@ void setup()
 {
   Wire.begin(4);                // join i2c bus with address #4
   Wire.onReceive(receiveEvent); // register event
-  Serial.begin(9600);           // start serial for output
+  Serial.begin(115200);           // start serial for output
 }
 
 void loop()
 {
   Serial.println("waiting");
-  delay(100);
+  delay(1000);
 }
 
 // function that executes whenever data is received from master
